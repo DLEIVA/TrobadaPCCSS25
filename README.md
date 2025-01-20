@@ -3,5 +3,5 @@ Repositori per la comunicació pòster presentada a la XII trobada de professora
 
 Conté:
 - Base de dades anonimitzada
-- Codi d'ànalisi i el·laboració del pòster
+- Codi d'anàlisi i elaboració del pòster
 - Pòster PDF
