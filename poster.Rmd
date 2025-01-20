@@ -69,7 +69,7 @@ La motivació és un factor explicatiu essencial de les diferències individuals
 
 ## Objectius
 
-1. Trobar perfils motivacionals i d’absentisme
+1. Trobar perfils motivacionals i d’absentisme.
 2. Estudiar la relació entre aquests perfils i el rendiment acadèmic en una mostra d’estudiants.
 
 # Mètodes
@@ -86,7 +86,7 @@ plot(qrcode::qr_code('https://github.com/DLEIVA/TrobadaPCCSS25'))
 
 78 estudiants proporcionen un mínim de 10 mesures setmanals ($14\%$ de la mostra potencial). S’han trobat dos perfils motivacionals principals: un grup format per persones 43 persones (grup A) es caracteritza per majors nivells d'amotivació i de regulació extrínseca social. El segon grup (B) format per 35 persones presenta majors nivells de motivació intrínseca, regulació (identificada i introjectada), així como motivació extrínseca material al llarg de tot el periode d'estudi.
 
-S’han trobat diferències significatives en el rendiment subjectiu i al nivell d’absentisme al llarg del curs, sent el grup B el que presenta un menor rendiment percebut i un major nivell d'absentisme. Entre les causes d'absentisme, el grup A reporta un major número de raons relacionades amb la metodologia docent (continguts, dinàmiques de les sessions, actuació docent). Encara no disposem de les dades de rendiment objectiu.
+S’han trobat diferències significatives en el rendiment subjectiu i al nivell d’absentisme al llarg del curs, sent el grup B el que presenta un major rendiment percebut i un menor nivell d'absentisme. Entre les causes d'absentisme, el grup A reporta un major número de raons relacionades amb la metodologia docent (continguts, dinàmiques de les sessions, actuació docent). Encara no disposem de les dades de rendiment objectiu.
 
 ```{r out.width="100%",fig.height=12}
 par(mar=c(.5,.5,0.1,.1))
@@ -282,6 +282,8 @@ pf <- ggplot(ls.tabla, aes(x=Register, y=lsmean, linetype=clusters)) +
 
 ```{r}
 
+options(OutDec=',')
+
 vars2Crear <- colnames(datosdef)[101:107][c(7,1:6)]
 
 prueba <- vector()
@@ -290,8 +292,8 @@ ICs <- vector()
 
 for(i in 1:length(vars2Crear)){
   temp <-t.test(as.formula(paste(vars2Crear[i],'~clusters',sep='')),data=datosdef)
-  prueba[i] <- paste0(round(temp$statistic,3),' (',round(temp$parameter),'); ',ifelse(temp$p.value<.001,'<0.001',ifelse(temp$p.value<.01,'<0.01',
-                                             ifelse(temp$p.value<.05,'<0.05',paste(round(temp$p.value,2),sep='')))))
+  prueba[i] <- paste0(round(temp$statistic,3),' (',round(temp$parameter),'); ',ifelse(temp$p.value<.001,'<0,001',ifelse(temp$p.value<.01,'<0,01',
+                                             ifelse(temp$p.value<.05,'<0,05',paste(round(temp$p.value,2),sep='')))))
   ICi[i] <- round(temp$conf.int[1],2)
   ICs[i] <- round(temp$conf.int[2],2)
 }
@@ -313,6 +315,15 @@ RESULTADOS %>% kable() %>% kable_styling("striped") %>%
   add_header_above(c("","Grup A" = 2, "Grup B" = 2,"Prova" = 1, "IC95% diferència"=2),color="#035AA6")  %>% 
 column_spec(1, color = "#035AA6")   %>% 
 row_spec(0, color = "#035AA6")
+
+# knitr::kable(
+#   iris[1:5,1:5], format = "html",
+#   align = "c", col.names = c("Sepal <br> Length",
+#                              "Sepal <br> Width",
+#                              "Petal <br> Length",
+#                              "Petal <br> Width",
+#                              "Species"),
+#   escape = FALSE)
 ```
 
 ```{r out.width="100%",fig.height=12}
