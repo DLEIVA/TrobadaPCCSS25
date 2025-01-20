@@ -1,0 +1,339 @@
+---
+title: |
+  | Patrons motivacionals, absentisme i rendiment acadèmic
+title_textsize: "65pt"  
+author:
+  - name: David Leiva
+    orcid: ''
+  - name: Rumen Manolov
+  - name: Ruth Dolado
+  - name: Joan Guàrdia
+  - name: Maribel Peró
+  - name: Lluis Salafranca
+  - name: Carles Soriano-Mas
+  - name: Jaume Turbany
+author_textsize: "40pt"  
+affiliation:
+  - address: Facultat Psicologia, Universitat de Barcelona
+column_numbers: 2
+logoright_name: CSlogo2.png
+logoleft_name: Logotip_UB.svg.png
+output: 
+  posterdown::posterdown_html:
+    self_contained: true
+    css: style.css
+knit: pagedown::chrome_print
+font_family: 'Cabin'
+titletext_fontfamily: 'Cabin'
+primary_colour: "#035AA6"
+accent_colour: "#035AA6"
+sectitle2_textcol: "#035AA6"
+poster_width: 31.4961in
+poster_height: 47.2441in
+bibliography: mybib.bib
+csl: apa.csl
+---
+```{css, echo=FALSE}
+div.logo_left{
+  margin-top: 140px;
+  width: 20%;
+}
+div.poster_title{
+  width: 60%;
+}
+div.logo_right{
+  margin-top: 140px;
+  width: 20%;
+}
+```
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      tidy = FALSE,
+                      message = FALSE,
+                      fig.align = 'center',
+                      out.width = "100%")
+options(knitr.table.format = "html") 
+library(emmeans)
+library(lme4)
+library(nlme)
+library(tidyverse)
+library(patchwork)
+library(kableExtra)
+```
+
+# Introducció
+
+La motivació és un factor explicatiu essencial de les diferències individuals en el rendiment i la satisfacció acadèmica en l'estudiantat. D’altra banda, l’absentisme s’ha convertit en un problema cada cop més prevalent en les nostres aules amb un impacte certament negatiu sobre el rendiment i la satisfacció de l’estudiantat i el professorat. No és comú trobar estudis en els quals s’integrin factors motivacionals i factors relacionats amb l’absentisme conjuntament com a predictors del rendiment acadèmic des d’un abordatge longitudinal.
+
+## Objectius
+
+1. Trobar perfils motivacionals i d’absentisme
+2. Estudiar la relació entre aquests perfils i el rendiment acadèmic en una mostra d’estudiants.
+
+# Mètodes
+
+Estudi longitudinal intensiu, consistent en 14 mesures setmanals durant tot un semestre. La mostra està composada per estudiants de *Tècniques de Recerca* del grau de Psicologia (n=78). Els estudiants responen qüestionaris setmanals de motivació [@gagne2015], d’absentisme [@triado2013] i de rendiment subjectiu. S’empren tècniques de classificació longitudinal per obtenir els patrons motivacionals i models de corbes de creixement per descriure aquests patrons. L’associació entre els patrons motivacionals, l’absentisme i el rendiment s’estudia amb proves t. Totes les dades i el codi generat per les anàlisis es troben disponibles a:
+
+```{r out.width="25%",fig.height=.25,fig.width=.25}
+par(mar=c(.5,.5,0.1,.1))
+plot(qrcode::qr_code('https://github.com/DLEIVA/TrobadaPCCSS25'))
+```
+
+
+# Resultats
+
+78 estudiants proporcionen un mínim de 10 mesures setmanals ($14\%$ de la mostra potencial). S’han trobat dos perfils motivacionals principals: un grup format per persones 43 persones (grup A) es caracteritza per majors nivells d'amotivació i de regulació extrínseca social. El segon grup (B) format per 35 persones presenta majors nivells de motivació intrínseca, regulació (identificada i introjectada), així como motivació extrínseca material al llarg de tot el periode d'estudi.
+
+S’han trobat diferències significatives en el rendiment subjectiu i al nivell d’absentisme al llarg del curs, sent el grup B el que presenta un menor rendiment percebut i un major nivell d'absentisme. Entre les causes d'absentisme, el grup A reporta un major número de raons relacionades amb la metodologia docent (continguts, dinàmiques de les sessions, actuació docent). Encara no disposem de les dades de rendiment objectiu.
+
+```{r out.width="100%",fig.height=12}
+par(mar=c(.5,.5,0.1,.1))
+load('datosdef.RData')
+
+### Amotivation
+
+tempdat <- datosdef %>% 
+  select(ID,paste('Amotiv_',1:14,sep=''),clusters) %>% 
+  gather(Amotivation,measure,-c(ID,clusters)) %>%
+  mutate(Register=str_split(Amotivation,'_') %>% map_chr(.,2) %>% as.numeric()) %>% 
+  select(ID,measure,Register,clusters) %>% arrange(ID)
+
+vfopt <- varIdent(form=~1|clusters)
+
+mod.E2 <- lme(fixed=measure~1+poly(Register,2,raw=TRUE)*clusters,random=~Register|ID,data=tempdat,
+              weights=vfopt,na.action=na.exclude,control=list('optim'))
+
+ls.tabla <- data.frame(summary(lsmeans(mod.E2, pairwise~clusters*Register,at=list(Register=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14)),
+                                       data=tempdat,params=list(weights=vfopt),adjust="tukey"))$lsmeans[c('Register','clusters',
+                                                                                                          'lsmean','lower.CL','upper.CL')])
+
+pa <- ggplot(ls.tabla, aes(x=Register, y=lsmean, linetype=clusters)) + 
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
+                width = 0.2,col="#035AA6") +
+  geom_line(col="#035AA6") +
+  geom_point(aes(y = lsmean), size = 3, 
+             shape = 21, col="#035AA6",fill = "white") +
+  labs(x = "Setmana", y = bquote("Mitjana" %+-% "2EE"),
+       title = "Amotivació",linetype='Grup') +
+  theme_bw() +
+  theme(plot.title = element_text(colour = "#035AA6",face='bold')) +
+  scale_x_continuous(breaks=c(1:14),
+                     labels=paste0(1:14)) +
+  scale_linetype_discrete(name='Grup',breaks=c('A','B'),
+                          labels=paste0(c('A','B'),' (n = ',table(datosdef$clusters),')')) +  
+  theme(legend.position="bottom")
+
+# Extrinsic material regulation
+
+tempdat <- datosdef %>% 
+  select(ID,paste('ExtrinsRM_',1:14,sep=''),clusters) %>% 
+  gather(ExtrinsRM,measure,-c(ID,clusters)) %>%
+  mutate(Register=str_split(ExtrinsRM,'_') %>% map_chr(.,2) %>% as.numeric()) %>% 
+  select(ID,measure,Register,clusters) %>% arrange(ID)
+
+mod.D2 <- gls(measure~1+poly(Register,2,raw=TRUE)+clusters,data=tempdat,method='ML',
+              weights=vfopt,na.action=na.exclude,control=list('optim'))
+
+ls.tabla <- data.frame(summary(lsmeans(mod.D2, pairwise~clusters*Register,at=list(Register=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14)),
+                                       data=tempdat,params=list(weights=vfopt),adjust="tukey"))$lsmeans[c('Register','clusters',
+                                                                                                          'lsmean','lower.CL','upper.CL')])
+
+pb <- ggplot(ls.tabla, aes(x=Register, y=lsmean, linetype=clusters)) + 
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
+                width = 0.2,col="#035AA6") +
+  geom_line(col="#035AA6") +
+  geom_point(aes(y = lsmean), size = 3, 
+             shape = 21, col="#035AA6",fill = "white") +
+  labs(x = "Setmana", y = bquote("Mitjana" %+-% "2EE"),
+       title = "Regulació Extrínseca: Material") +
+  theme_bw() +
+  theme(plot.title = element_text(colour = "#035AA6",face='bold')) +  
+  scale_x_continuous(breaks=c(1:14),
+                     labels=paste0(1:14)) +
+  scale_linetype_discrete(name='Grup',breaks=c('A','B'),
+                          labels=paste0(c('A','B'),' (n = ',table(datosdef$clusters),')')) +  
+  theme(legend.position="bottom")
+
+# Social extrinsic regulation
+
+tempdat <- datosdef %>% 
+  select(ID,paste('ExtrinsRS_',1:14,sep=''),clusters) %>% 
+  gather(ExtrinsRS,measure,-c(ID,clusters)) %>%
+  mutate(Register=str_split(ExtrinsRS,'_') %>% map_chr(.,2) %>% as.numeric()) %>% 
+  select(ID,measure,Register,clusters) %>% arrange(ID)
+
+mod.D2 <- lme(fixed=measure~1+poly(Register,2,raw=TRUE)+clusters,random=~Register|ID,data=tempdat,
+              weights=vfopt,na.action=na.exclude,control=list('optim'))
+
+ls.tabla <- data.frame(summary(lsmeans(mod.D2, pairwise~clusters*Register,at=list(Register=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14)),
+                                       data=tempdat,params=list(weights=vfopt),adjust="tukey"))$lsmeans[c('Register','clusters',
+                                                                                                          'lsmean','lower.CL','upper.CL')])
+
+pc <- ggplot(ls.tabla, aes(x=Register, y=lsmean, linetype=clusters)) + 
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
+                width = 0.2,col="#035AA6") +
+  geom_line(col="#035AA6") +
+  geom_point(aes(y = lsmean), size = 3, 
+             shape = 21, col="#035AA6",fill = "white") +
+  labs(x = "Setmana", y = bquote("Mitjana" %+-% "2EE"),
+       title = "Regulació Extrínseca: Social",linetype='Grup') +
+  theme_bw() +
+  theme(plot.title = element_text(colour = "#035AA6",face='bold')) +  
+  scale_x_continuous(breaks=c(1:14),
+                     labels=paste0(1:14)) +
+  scale_linetype_discrete(name='Grup',breaks=c('A','B'),
+                          labels=paste0(c('A','B'),' (n = ',table(datosdef$clusters),')')) +  
+  theme(legend.position="bottom")
+
+# Identified regulation
+
+tempdat <- datosdef %>% 
+  select(ID,paste('Identif_',1:14,sep=''),clusters) %>% 
+  gather(Identif,measure,-c(ID,clusters)) %>%
+  mutate(Register=str_split(Identif,'_') %>% map_chr(.,2) %>% as.numeric()) %>% 
+  select(ID,measure,Register,clusters) %>% arrange(ID)
+
+mod.E2 <- lme(fixed=measure~1+poly(Register,2,raw=TRUE)*clusters,random=~Register|ID,data=tempdat,
+              weights=vfopt,na.action=na.exclude,control=list('optim'))
+
+ls.tabla <- data.frame(summary(lsmeans(mod.E2, pairwise~clusters*Register,at=list(Register=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14)),
+                                       data=tempdat,params=list(weights=vfopt),adjust="tukey"))$lsmeans[c('Register','clusters',
+                                                                                                          'lsmean','lower.CL','upper.CL')])
+
+pd <- ggplot(ls.tabla, aes(x=Register, y=lsmean, linetype=clusters)) + 
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
+                width = 0.2,col="#035AA6") +
+  geom_line(col="#035AA6") +
+  geom_point(aes(y = lsmean), size = 3, 
+             shape = 21, col="#035AA6",fill = "white") +  labs(x = "Setmana", y = bquote("Mitjana" %+-% "2EE"),
+       title = "Regulació identificada",linetype='Grup') +
+  theme_bw() +
+  theme(plot.title = element_text(colour = "#035AA6",face='bold')) +  
+  scale_x_continuous(breaks=c(1:14),
+                     labels=paste0(1:14)) +
+  scale_linetype_discrete(name='Grup',breaks=c('A','B'),
+                          labels=paste0(c('A','B'),' (n = ',table(datosdef$clusters),')')) +  
+  theme(legend.position="bottom")
+
+# Intrinsic motivation
+
+tempdat <- datosdef %>% 
+  select(ID,paste('Intrins_',1:14,sep=''),clusters) %>% 
+  gather(Intrins,measure,-c(ID,clusters)) %>%
+  mutate(Register=str_split(Intrins,'_') %>% map_chr(.,2) %>% as.numeric()) %>% 
+  select(ID,measure,Register,clusters) %>% arrange(ID)
+
+mod.D2 <- lme(fixed=measure~1+poly(Register,2,raw=TRUE)+clusters,random=~poly(Register,2,raw=TRUE)|ID,data=tempdat,
+              weights=vfopt,na.action=na.exclude,control=list('optim'))
+
+ls.tabla <- data.frame(summary(lsmeans(mod.D2, pairwise~clusters*Register,at=list(Register=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14)),
+                                       data=tempdat,params=list(weights=vfopt),adjust="tukey"))$lsmeans[c('Register','clusters',
+                                                                                                          'lsmean','lower.CL','upper.CL')])
+
+pe <- ggplot(ls.tabla, aes(x=Register, y=lsmean, linetype=clusters)) + 
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
+                width = 0.2,col="#035AA6") +
+  geom_line(col="#035AA6") +
+  geom_point(aes(y = lsmean), size = 3, 
+             shape = 21, col="#035AA6",fill = "white") +
+  labs(x = "Setmana", y = bquote("Mitjana" %+-% "2EE"),
+       title = "Motivació Intrínsica",linetype='Grup') +
+  theme_bw() +
+  theme(plot.title = element_text(colour = "#035AA6",face='bold')) +  
+  scale_x_continuous(breaks=c(1:14),
+                     labels=paste0(1:14)) +
+  scale_linetype_discrete(name='Grup',breaks=c('A','B'),
+                          labels=paste0(c('A','B'),' (n = ',table(datosdef$clusters),')')) +  
+  theme(legend.position="bottom")
+
+# Introjected regulation
+
+tempdat <- datosdef %>% 
+  select(ID,paste('Introject_',1:14,sep=''),clusters) %>% 
+  gather(RendPerc,measure,-c(ID,clusters)) %>%
+  mutate(Register=str_split(RendPerc,'_') %>% map_chr(.,2) %>% as.numeric()) %>% 
+  select(ID,measure,Register,clusters) %>% arrange(ID)
+
+mod.E <- lme(fixed=measure~1+poly(Register,2,raw=TRUE)*clusters,random=~poly(Register,2,raw=TRUE)|ID,data=tempdat,
+              na.action=na.exclude,control=list('optim'))
+
+ls.tabla <- data.frame(summary(lsmeans(mod.E, pairwise~clusters*Register,at=list(Register=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14)),
+                                       data=tempdat,params=list(weights=vfopt),adjust="tukey"))$lsmeans[c('Register','clusters',
+                                                                                                          'lsmean','lower.CL','upper.CL')])
+
+pf <- ggplot(ls.tabla, aes(x=Register, y=lsmean, linetype=clusters)) + 
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
+                width = 0.2,col="#035AA6") +
+  geom_line(col="#035AA6") +
+  geom_point(aes(y = lsmean), size = 3, 
+             shape = 21, col="#035AA6",fill = "white") +
+  labs(x = "Setmana", y = bquote("Mitjana" %+-% "2EE"),
+       title = "Regulació Introjectada",linetype='Grup') +
+  theme_bw() +
+  theme(plot.title = element_text(colour = "#035AA6",face='bold')) +  
+  scale_x_continuous(breaks=c(1:14),
+                     labels=paste0(1:14)) +
+  scale_linetype_discrete(name='Grup',breaks=c('A','B'),
+                          labels=paste0(c('A','B'),' (n = ',table(datosdef$clusters),')')) +  
+  theme(legend.position="bottom")
+```
+
+```{r}
+
+vars2Crear <- colnames(datosdef)[101:107][c(7,1:6)]
+
+prueba <- vector()
+ICi <- vector()
+ICs <- vector()
+
+for(i in 1:length(vars2Crear)){
+  temp <-t.test(as.formula(paste(vars2Crear[i],'~clusters',sep='')),data=datosdef)
+  prueba[i] <- paste0(round(temp$statistic,3),' (',round(temp$parameter),'); ',ifelse(temp$p.value<.001,'<0.001',ifelse(temp$p.value<.01,'<0.01',
+                                             ifelse(temp$p.value<.05,'<0.05',paste(round(temp$p.value,2),sep='')))))
+  ICi[i] <- round(temp$conf.int[1],2)
+  ICs[i] <- round(temp$conf.int[2],2)
+}
+
+mymean <- function(x,...){
+  round(mean(x,...),2)
+}
+
+mysd <- function(x,...){
+  round(sd(x,...),2)
+}
+
+RESULTADOS <- 
+cbind(t(doBy::summaryBy(as.formula(paste(paste(vars2Crear,collapse=' + '),'~clusters',sep='')),FUN=mymean,na.rm=TRUE,data=datosdef)[,-1]),
+t(doBy::summaryBy(as.formula(paste(paste(vars2Crear,collapse=' + '),'~clusters',sep='')),FUN=mysd,na.rm=TRUE,data=datosdef)[-1]),prueba,ICi,ICs)[,c(1,3,2,4,5,6,7)]
+rownames(RESULTADOS) <- c('Rend. percebut','Absentisme','Planificació','M. docent','M. aprenentatge','P. Curs','F. externs')
+colnames(RESULTADOS) <- c(rep(c('M','DT'),2),'t (gll); p valor','Límit inf.','Límit sup.')
+RESULTADOS %>% kable() %>% kable_styling("striped") %>%
+  add_header_above(c("","Grup A" = 2, "Grup B" = 2,"Prova" = 1, "IC95% diferència"=2),color="#035AA6")  %>% 
+column_spec(1, color = "#035AA6")   %>% 
+row_spec(0, color = "#035AA6")
+
+# knitr::kable(
+#   iris[1:5,1:5], format = "html",
+#   align = "c", col.names = c("Sepal <br> Length",
+#                              "Sepal <br> Width",
+#                              "Petal <br> Length",
+#                              "Petal <br> Width",
+#                              "Species"),
+#   escape = FALSE)
+```
+
+```{r out.width="100%",fig.height=12}
+(pa + pe) /
+(pd + pf) /
+(pb + pc) + 
+plot_layout(guides = "collect") & 
+  theme(legend.position="bottom")
+```
+
+# Discussió
+
+Els resultats preliminars d’aquest estudi ens ajuden a veure les possibles relacions entre els patrons motivacionals, les causes d’absentisme i el seu impacte sobre el rendiment acadèmic.
+
+# Referències
