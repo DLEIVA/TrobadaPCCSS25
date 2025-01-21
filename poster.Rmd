@@ -72,7 +72,7 @@ La motivació és un factor explicatiu essencial de les diferències individuals
 1. Trobar perfils motivacionals i d’absentisme.
 2. Estudiar la relació entre aquests perfils i el rendiment acadèmic en una mostra d’estudiants.
 
-# Mètodes
+# Mètode
 
 Estudi longitudinal intensiu, consistent en 14 mesures setmanals durant tot un semestre. La mostra està composada per estudiants de *Tècniques de Recerca* del grau de Psicologia (n=78). Els estudiants responen qüestionaris setmanals de motivació [@gagne2015], d’absentisme [@triado2013] i de rendiment subjectiu. S’empren tècniques de classificació longitudinal per obtenir els patrons motivacionals i models de corbes de creixement per descriure aquests patrons. L’associació entre els patrons motivacionals, l’absentisme i el rendiment s’estudia amb proves t. Totes les dades i el codi generat per les anàlisis es troben disponibles a:
 
