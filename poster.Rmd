@@ -315,15 +315,6 @@ RESULTADOS %>% kable() %>% kable_styling("striped") %>%
   add_header_above(c("","Grup A" = 2, "Grup B" = 2,"Prova" = 1, "IC95% diferència"=2),color="#035AA6")  %>% 
 column_spec(1, color = "#035AA6")   %>% 
 row_spec(0, color = "#035AA6")
-
-# knitr::kable(
-#   iris[1:5,1:5], format = "html",
-#   align = "c", col.names = c("Sepal <br> Length",
-#                              "Sepal <br> Width",
-#                              "Petal <br> Length",
-#                              "Petal <br> Width",
-#                              "Species"),
-#   escape = FALSE)
 ```
 
 ```{r out.width="100%",fig.height=12}
